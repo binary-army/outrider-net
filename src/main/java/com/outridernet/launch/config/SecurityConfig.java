@@ -33,20 +33,19 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // Your public APIs
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/health"
                         ).permitAll()
 
-                        // Everything else requires authentication
+                        .requestMatchers("/ws/**").permitAll()
+
                         .anyRequest().authenticated()
                 ).addFilterBefore(
                         jwtAuthenticationFilter,
