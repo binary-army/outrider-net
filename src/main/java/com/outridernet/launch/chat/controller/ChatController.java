@@ -1,39 +1,49 @@
 package com.outridernet.launch.chat.controller;
 
-import com.outridernet.launch.chat.dto.ChatRequest;
-import com.outridernet.launch.chat.dto.CreateRequest;
-import com.outridernet.launch.chat.service.ChatRequestService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import com.outridernet.launch.chat.dto.ChatMessageResponse;
+import com.outridernet.launch.chat.service.ChatService;
+import com.outridernet.launch.common.entity.User;
+import com.outridernet.launch.common.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@RequiredArgsConstructor
+import java.security.Principal;
+import java.util.List;
+
 @RestController
-@SecurityRequirement(name = "bearerAuth")
-@RequestMapping("/api/chat-requests")
+@RequestMapping("/api/conversations")
+@RequiredArgsConstructor
 public class ChatController {
 
-    private final ChatRequestService chatRequestService;
+    private final ChatService chatService;
 
-    @PostMapping
-    public ResponseEntity<ChatRequest> createRequest(Authentication authentication, @RequestBody CreateRequest request) {
+    private final UserRepository userRepository;
 
-        String email = authentication.getName();
+    @GetMapping("/{conversationId}/messages")
+    public ResponseEntity<List<ChatMessageResponse>> getMessages(
+            @PathVariable Long conversationId,
+            Principal principal
+    ) {
 
-        ChatRequest created = chatRequestService.createRequest(email, request);
+        User user =
+                userRepository
+                        .findByEmail(principal.getName())
+                        .orElseThrow(
+                                () -> new IllegalStateException(
+                                        "User not found"
+                                )
+                        );
 
-        return ResponseEntity.ok(created);
-    }
+        List<ChatMessageResponse> messages =
+                chatService.getMessages(
+                        conversationId,
+                        user.getId()
+                );
 
-    @PostMapping("/{requestId}/accept")
-    public ResponseEntity<Void> acceptRequest(@PathVariable Long requestId, Authentication authentication) {
-
-        String email = authentication.getName();
-
-        chatRequestService.acceptRequest(requestId, email);
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(messages);
     }
 }
