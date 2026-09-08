@@ -10,14 +10,8 @@ public class WebSocketNotificationService {
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void sendToUser(String username, String destination, Object payload) {
+    public void sendToUser(String email, String destination, Object message) {
 
-        messagingTemplate.convertAndSendToUser(username, destination, payload);
+        messagingTemplate.convertAndSendToUser(email, destination, message);
     }
-
-    public void sendToTopic(String destination, Object payload) {
-
-        messagingTemplate.convertAndSend(destination, payload);
-    }
-
 }

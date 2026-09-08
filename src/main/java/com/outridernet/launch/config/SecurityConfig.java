@@ -25,7 +25,6 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
 
         http
-                .cors(cors -> {}) //TODO: remove this for deployment
                 .csrf(csrf -> csrf.disable())
                 // JWT = stateless authentication
                 .sessionManagement(session ->
