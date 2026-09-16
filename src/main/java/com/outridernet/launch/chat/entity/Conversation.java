@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "conversations")
+@Table(name = "conversations", indexes = {@Index(name = "idx_conversation_request", columnList = "request_id"), @Index(name = "idx_conversation_user", columnList = "user_id"), @Index(name = "idx_conversation_outrider", columnList = "outrider_id")})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,7 +18,10 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "request_id", nullable = false)
+    /**
+     * One ChatRequest can create only one Conversation.
+     */
+    @Column(name = "request_id", nullable = false, unique = true)
     private Long requestId;
 
     @Column(name = "user_id", nullable = false)
@@ -31,7 +34,24 @@ public class Conversation {
     @Column(nullable = false)
     private ConversationStatus status;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+
+        updatedAt = LocalDateTime.now();
+    }
 }

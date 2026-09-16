@@ -53,7 +53,13 @@ public class AuthService {
 
         String email = authentication.getName();
 
-        String token = jwtService.generateToken(email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String token = jwtService.generateToken(
+                user.getEmail(),
+                user.getId()
+        );
 
         return new LoginResponse(token);
     }

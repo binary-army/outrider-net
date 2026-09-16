@@ -1,6 +1,7 @@
 package com.outridernet.launch.chat.service;
 
 import com.outridernet.launch.chat.dto.*;
+import com.outridernet.launch.chat.entity.Conversation;
 import com.outridernet.launch.chat.repository.ChatRequestRepository;
 import com.outridernet.launch.chat.repository.RequestRecipientRepository;
 import com.outridernet.launch.common.entity.User;
@@ -23,6 +24,8 @@ public class ChatRequestService {
     private final RequestRecipientRepository recipientRepository;
 
     private final WebSocketNotificationService notificationService;
+
+    private final ConversationService conversationService;
 
 
     /**
@@ -146,9 +149,20 @@ public class ChatRequestService {
 
         recipient.setStatus(RecipientStatus.ACCEPTED);
 
+        // -----------------------------------------
+        // 7. create conversion immediate from original sender
+        // -----------------------------------------
+
+        Conversation conversation =
+                conversationService.createConversation(
+                        request.getId(),
+                        request.getUserId(),
+                        outriderId
+                );
+
 
         // -----------------------------------------
-        // 7. Save
+        // 8. Save
         // -----------------------------------------
 
         chatRequestRepository.save(request);
@@ -157,7 +171,7 @@ public class ChatRequestService {
 
 
         // -----------------------------------------
-        // 8. Notify original sender
+        // 9. Notify original sender
         // -----------------------------------------
 
         User sender = userRepository.findById(request.getUserId()).orElseThrow(() -> new RuntimeException("Sender not found"));

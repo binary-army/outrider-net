@@ -6,7 +6,15 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_messages")
+@Table(
+        name = "chat_messages",
+        indexes = {
+                @Index(
+                        name = "idx_chat_message_conversation_created",
+                        columnList = "conversation_id, created_at"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,14 +26,23 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "conversation_id", nullable = false)
     private Long conversationId;
 
-    @Column(nullable = false)
+    @Column(name = "sender_id", nullable = false)
     private Long senderId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
