@@ -100,7 +100,8 @@ public class ChatRequestService {
         // 1. Find accepting user
         // -----------------------------------------
 
-        User outrider = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        User outrider = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Long outriderId = outrider.getId();
 
@@ -109,7 +110,8 @@ public class ChatRequestService {
         // 2. Find ChatRequest
         // -----------------------------------------
 
-        ChatRequest request = chatRequestRepository.findById(requestId).orElseThrow(() -> new RuntimeException("Request not found"));
+        ChatRequest request = chatRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
 
 
         // -----------------------------------------
@@ -117,7 +119,6 @@ public class ChatRequestService {
         // -----------------------------------------
 
         if (request.getStatus() != RequestStatus.PENDING) {
-
             throw new RuntimeException("Request is already accepted or closed");
         }
 
@@ -126,7 +127,14 @@ public class ChatRequestService {
         // 4. Check recipient
         // -----------------------------------------
 
-        RequestRecipient recipient = recipientRepository.findByRequestIdAndOutriderId(requestId, outriderId).orElseThrow(() -> new RuntimeException("You are not selected for this request"));
+        RequestRecipient recipient =
+                recipientRepository
+                        .findByRequestIdAndOutriderId(requestId, outriderId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "You are not selected for this request"
+                                )
+                        );
 
 
         // -----------------------------------------
@@ -134,7 +142,6 @@ public class ChatRequestService {
         // -----------------------------------------
 
         if (recipient.getStatus() != RecipientStatus.PENDING) {
-
             throw new RuntimeException("Request is no longer available");
         }
 
@@ -144,39 +151,55 @@ public class ChatRequestService {
         // -----------------------------------------
 
         request.setStatus(RequestStatus.ACCEPTED);
-
         request.setAcceptedOutriderId(outriderId);
 
         recipient.setStatus(RecipientStatus.ACCEPTED);
 
+
         // -----------------------------------------
-        // 7. create conversion immediate from original sender
+        // 7. Create conversation
         // -----------------------------------------
 
         Conversation conversation =
                 conversationService.createConversation(
                         request.getId(),
-                        request.getUserId(),
-                        outriderId
+                        request.getUserId(),   // original sender
+                        outriderId             // accepting user
                 );
 
 
         // -----------------------------------------
-        // 8. Save
+        // 8. IMPORTANT:
+        // Store conversation ID in request
+        // -----------------------------------------
+
+        request.setConversationId(conversation.getId());
+
+
+        // -----------------------------------------
+        // 9. Save
         // -----------------------------------------
 
         chatRequestRepository.save(request);
-
         recipientRepository.save(recipient);
 
 
         // -----------------------------------------
-        // 9. Notify original sender
+        // 10. Find original sender
         // -----------------------------------------
 
-        User sender = userRepository.findById(request.getUserId()).orElseThrow(() -> new RuntimeException("Sender not found"));
+        User sender = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("Sender not found"));
 
 
-        notificationService.sendToUser(sender.getEmail(), "/queue/chat-request-accepted", request);
+        // -----------------------------------------
+        // 11. Notify original sender
+        // -----------------------------------------
+
+        notificationService.sendToUser(
+                sender.getEmail(),
+                "/queue/chat-request-accepted",
+                request
+        );
     }
 }
