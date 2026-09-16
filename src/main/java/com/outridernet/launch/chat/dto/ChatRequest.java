@@ -32,6 +32,8 @@ public class ChatRequest {
 
     private Long acceptedOutriderId;
 
+    private Long conversationId;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime expiresAt;
