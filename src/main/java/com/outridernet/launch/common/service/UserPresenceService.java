@@ -61,4 +61,17 @@ public class UserPresenceService {
 
         presenceRepository.save(presence);
     }
+
+    public boolean isOnline(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        return presenceRepository
+                .findByUserId(user.getId())
+                .map(UserPresence::isOnline)
+                .orElse(false);
+    }
 }
